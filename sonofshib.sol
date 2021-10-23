@@ -385,7 +385,7 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
-contract MiniShibaToken is Context, IERC20, Ownable {
+contract SonOfShib is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
     
@@ -409,8 +409,8 @@ contract MiniShibaToken is Context, IERC20, Ownable {
 
     //string private _name = "MiniShibaInu";
     //string private _symbol = "MiniSHIBA";
-    string private _name = "MiniTest";
-    string private _symbol = "MISTTT";
+    string private _name = "SonOfShibTest";
+    string private _symbol = "SOSTT";
     uint8 private _decimals = 9;
 
     uint256 public _rewardFee = 2;
@@ -424,14 +424,12 @@ contract MiniShibaToken is Context, IERC20, Ownable {
 
     uint256 public _startTimeForSwap;
     uint256 public _intervalMinutesForSwap = 1 * 1 minutes;
-
-    uint256 public marketingDivisor = 5;
     
     uint256 private maxTxPercent = 1; // Less fields to edit
     uint256 private maxTxDivisor = 100;
     uint256 private _maxTxAmount = (_tTotal * maxTxPercent) / maxTxDivisor;
+    uint256 public  _maxTxAmountUI = _maxTxAmount;
     uint256 private _previousMaxTxAmount = _maxTxAmount;
-    uint256 public maxTxAmountUI = (_tTotal * maxTxPercent) / maxTxDivisor; // Actual amount for UI's
     
     uint256 private numTokensSellToAddToLiquidity = (_tTotal * 5) / 10000;
 
@@ -446,7 +444,7 @@ contract MiniShibaToken is Context, IERC20, Ownable {
     event SwapAndLiquify(
         uint256 tokensSwapped,
         uint256 ethReceived,
-        uint256 tokensIntoLiqudity
+        uint256 tokensIntoLiquidity
     );
     
     event SwapTokensForETH(
@@ -593,6 +591,7 @@ contract MiniShibaToken is Context, IERC20, Ownable {
         for (uint256 i = 0; i < _excluded.length; i++) {
             if (_excluded[i] == account) {
                 _excluded[i] = _excluded[_excluded.length - 1];
+                _rOwned[account] = _tOwned[account].mul(_getRate());
                 _tOwned[account] = 0;
                 _isExcluded[account] = false;
                 _excluded.pop();
@@ -650,8 +649,8 @@ contract MiniShibaToken is Context, IERC20, Ownable {
         swapTokensForEth(contractTokenBalance);
         uint256 transferredBalance = address(this).balance.sub(initialBalance);
 
-        // Send to Marketing address
-        transferToAddressETH(marketingAddress, transferredBalance.mul(marketingDivisor).div(100));
+        // Send to Marketing address (all the bnb)
+        transferToAddressETH(marketingAddress, transferredBalance);
     }
     
     
@@ -673,21 +672,6 @@ contract MiniShibaToken is Context, IERC20, Ownable {
         );
         
         emit SwapTokensForETH(tokenAmount, path);
-    }
-    
-    function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
-        // Approve token transfer to cover all possible scenarios
-        _approve(address(this), address(uniswapV2Router), tokenAmount);
-
-        // Add the liquidity
-        uniswapV2Router.addLiquidityETH{value: ethAmount}(
-            address(this),
-            tokenAmount,
-            0, // Slippage is unavoidable
-            0, // Slippage is unavoidable
-            owner(),
-            block.timestamp
-        );
     }
 
     function _tokenTransfer(address sender, address recipient, uint256 amount,bool takeFee) private {
@@ -889,18 +873,13 @@ contract MiniShibaToken is Context, IERC20, Ownable {
     }
 
     function setMaxTxPercent(uint256 _maxTxPercent) external onlyOwner {
-        _maxTxAmount = _tTotal.mul(_maxTxPercent).div(
-          10**3 // Division by 1000, set to 20 for 2%, set to 2 for 0.2%
-        );
-    
-        maxTxAmountUI = _maxTxAmount.div(uint256(_decimals));
+        _maxTxAmount = _tTotal.mul(_maxTxPercent).div(10**2); //20 = 20%, 2=2%
+        _maxTxAmountUI = _maxTxAmount;
       }
-  
-    function setMarketingDivisor(uint256 divisor) external onlyOwner {
-        marketingDivisor = divisor;
-    }
 
     function setMarketingAddress(address _marketingAddress) external onlyOwner {
+        require(_marketingAddress != address(0), "Address cannot be the 0 address");
+        require(_marketingAddress != deadAddress, "Address cannot be the burn address");
         marketingAddress = payable(_marketingAddress);
     }
 
@@ -929,7 +908,7 @@ contract MiniShibaToken is Context, IERC20, Ownable {
         uniswapV2Router = _uniswapV2Router;
     }
     
-     // To recieve ETH from uniswapV2Router when swapping
+     // To receive ETH from uniswapV2Router when swapping
     receive() external payable {}
     
 }
