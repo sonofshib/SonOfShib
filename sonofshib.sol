@@ -1,7 +1,3 @@
-/**
- *Submitted for verification at BscScan.com on 2021-07-30
-*/
-
 // SPDX-License-Identifier: Unlicensed
 
 pragma solidity ^0.8.4;
@@ -385,7 +381,7 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
-contract SonOfShib is Context, IERC20, Ownable {
+contract SonOfShibTest is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
     
@@ -407,10 +403,8 @@ contract SonOfShib is Context, IERC20, Ownable {
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
 
-    //string private _name = "MiniShibaInu";
-    //string private _symbol = "MiniSHIBA";
-    string private _name = "SonOfShibTest";
-    string private _symbol = "SOSTT";
+    string private _name = "SonOfShib";
+    string private _symbol = "SON";
     uint8 private _decimals = 9;
 
     uint256 public _rewardFee = 2;
@@ -431,7 +425,8 @@ contract SonOfShib is Context, IERC20, Ownable {
     uint256 public  _maxTxAmountUI = _maxTxAmount;
     uint256 private _previousMaxTxAmount = _maxTxAmount;
     
-    uint256 private numTokensSellToAddToLiquidity = (_tTotal * 5) / 10000;
+    uint256 private numTokensSellToAddToLiquidity = (_tTotal) / 100000;
+    uint256 public pubTokensSellToAddToLiquidity = numTokensSellToAddToLiquidity;
 
     IUniswapV2Router02 public uniswapV2Router;
     address public uniswapV2Pair;
@@ -462,6 +457,7 @@ contract SonOfShib is Context, IERC20, Ownable {
 
         _rOwned[_msgSender()] = _rTotal;
         
+        //Now references the ethereum network: https://docs.uniswap.org/protocol/V2/reference/smart-contracts/router-02
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
         
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(address(this), _uniswapV2Router.WETH());
@@ -698,41 +694,41 @@ contract SonOfShib is Context, IERC20, Ownable {
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee);
-        _burn(tBurn);
+        _burn(sender, tBurn);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
     function _transferToExcluded(address sender, address recipient, uint256 tAmount) private {
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tBurn) = _getValues(tAmount);
-       _rOwned[sender] = _rOwned[sender].sub(rAmount);
+        _rOwned[sender] = _rOwned[sender].sub(rAmount);
         _tOwned[recipient] = _tOwned[recipient].add(tTransferAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);           
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee);
-        _burn(tBurn);
+        _burn(sender, tBurn);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
     function _transferFromExcluded(address sender, address recipient, uint256 tAmount) private {
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tBurn) = _getValues(tAmount);
-      _tOwned[sender] = _tOwned[sender].sub(tAmount);
+        _tOwned[sender] = _tOwned[sender].sub(tAmount);
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);   
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee);
-        _burn(tBurn);
+        _burn(sender, tBurn);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
     function _transferBothExcluded(address sender, address recipient, uint256 tAmount) private {
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tBurn) = _getValues(tAmount);
-      _tOwned[sender] = _tOwned[sender].sub(tAmount);
+        _tOwned[sender] = _tOwned[sender].sub(tAmount);
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
         _tOwned[recipient] = _tOwned[recipient].add(tTransferAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);        
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee);
-        _burn(tBurn);
+        _burn(sender, tBurn);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
@@ -789,8 +785,9 @@ contract SonOfShib is Context, IERC20, Ownable {
             _tOwned[address(this)] = _tOwned[address(this)].add(tLiquidity);
     }
 
-    function _burn(uint256 burnAmount) private {
+    function _burn(address sender, uint256 burnAmount) private {
         _tOwned[deadAddress] = _tOwned[deadAddress].add(burnAmount);
+        emit Transfer(sender, deadAddress, burnAmount);
     }
 
     function calculateRewardFee(uint256 _amount) private view returns (uint256) {
@@ -870,6 +867,11 @@ contract SonOfShib is Context, IERC20, Ownable {
     
     function setMarketingFeePercent(uint256 marketingFee) external onlyOwner {
         _marketingFee = marketingFee;
+    }
+    
+    function setnumTokensSellToAddToLiquidity(uint256 numTokens) external onlyOwner {
+        numTokensSellToAddToLiquidity = numTokens;
+        pubTokensSellToAddToLiquidity = numTokens;
     }
 
     function setMaxTxPercent(uint256 _maxTxPercent) external onlyOwner {
