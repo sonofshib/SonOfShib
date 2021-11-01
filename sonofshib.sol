@@ -385,8 +385,7 @@ contract SonOfShibTest is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
     
-    //address payable public marketingAddress = payable(0xDAA30e72BefC8179bD8f9f4a9566bf11b3126faC); // Marketing Address
-    address payable public marketingAddress = payable(0x3534d01dAEd8A9ed2b40498F4B75576E834cD8Cd); // Marketing Address
+    address payable public marketingAddress = payable(0xDAA30e72BefC8179bD8f9f4a9566bf11b3126faC); // Marketing Address
     address public immutable deadAddress = 0x000000000000000000000000000000000000dEaD;
     mapping (address => uint256) private _rOwned;
     mapping (address => uint256) private _tOwned;
